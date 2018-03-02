@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
+# sklearn包LinearRegression() ——交叉验证
+# statsmodels包ols() ——无交叉验证
+# 多元线性回归表达式
+# 一元线性散点图
+# 预测值与实际值 ——图形解读
 
 import pandas as pd
 import numpy as np
 import statsmodels.formula.api as smf # 线性回归模型
 from sklearn import linear_model # 线性回归模型
-import statsmodels.api as sm # 多元线性回归-对应smf.ols
+import statsmodels.api as sm # 多元线性回归-对应sm.ols
 from sklearn.cross_validation import train_test_split # 训练集与测试集拆分
 from sklearn.metrics import mean_squared_error # 误差平方和
 import matplotlib.pyplot as plt # 画图
@@ -14,16 +19,28 @@ from sklearn.cross_validation import cross_val_score # 交叉验证
 # 读取数据
 iris = pd.read_csv('e:\data\iris.csv')
 
-# 保存描述统计
-b = iris.describe()
-print(b)
+# 查看数据
+print(iris.head())
+print(iris.describe())
 
-# 拆分训练集和测试集
-Train,Test = train_test_split(iris,train_size=0.8, random_state=1234)
+# 拆分数据
+X = iris.drop(['ID','SepalLength','Species'], axis = 1)
+Y = iris['SepalLength']
+train_X, test_X, train_Y, test_Y = train_test_split(X, Y, test_size=0.2, random_state=1234)
+# Train,Test = train_test_split(iris,train_size=0.8, random_state=1234)
 
-# train_X, test_X, train_Y, test_Y = train_test_split(X, Y, test_size=0.3, random_state=1)
+# LinearRegression()
+LR = linear_model.LinearRegression()
+LR.fit(train_X,train_Y)
+a,b = LR.coef_,LR.intercept_
+print(a,b)
+pred = LR.predict(exog = Test)
+RMSE = np.sqrt(mean_squared_error(Test.SepalLength,pred))
+print('第一个模型的预测效果：RMES=%.4f\n' %RMSE)
 
-# 一元线性回归
+
+
+
 
 # 训练-ols
 fit = smf.ols('SepalLength~SepalWidth',data=Train).fit()
@@ -115,7 +132,6 @@ scores = cross_val_score(linreg,train_X,train_Y,cv=10)
 print("交叉验证R方值：",scores)
 print("交叉验证R方均值：",np.mean(scores))
 
-linreg.
 
 
 
