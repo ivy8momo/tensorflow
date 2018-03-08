@@ -1,56 +1,48 @@
 # -*- coding: utf-8 -*-
 import tensorflow as tf
 import numpy as np
+# 用随机生成的小样本测试DNN模型
+tf.logging.set_verbosity(tf.logging.ERROR)              #日志级别设置成 ERROR，避免干扰
+np.set_printoptions(threshold='nan')                    #打印内容不限制长度
 
-test_count = 20         #行：数据集数量
-param_count = 5         #列：变量数
+param_count = 5         #变量数
+test_count = 20         #每次训练的样本数
 
-x = tf.placeholder(tf.float32, shape=[test_count,param_count])
-y = tf.placeholder(tf.float32, shape=[test_count,1])
-#之前的 w，因为我们使用神经网络表示了，因此不需要了，用tf.contrib.learn.DNNRegressor 来构造神经网络
-feature_columns = [tf.contrib.layers.real_valued_column("x")]           #特征列：定义输入
-regressor = tf.contrib.learn.DNNRegressor(feature_columns = feature_columns,
-                                          hidden_units = [5,5],         #隐藏层、隐藏单元数
-                                          model_dir = "E:\tensorflow\tmp\testtest")     #模型结果存储
+# 要求的值
+t_w = np.floor([511,231,86,434,523],dtype=np.float32).reshape([param_count,1])
 
+#x 是输入量，对应 t_x，用于训练输入，在训练过程中，由外部提供，因此是 placeholder 类型
+x = tf.placeholder(tf.float32,shape=[test_count,param_count])
+y = tf.placeholder(tf.float32,shape=[test_count,1])
 
-def get_train_inputs():
-    t_x = np.floor(1000 * np.random.random([test_count, param_count]), dtype=np.float32)
-    t_w = np.floor([511, 231, 86, 434, 523], dtype=np.float32).reshape([param_count, 1])
-    print(t_w)
-    t_y = t_x.dot(t_w)
-    # 第一个参数是一个字典，Key 是变量名称，Value 是变量的值转成 Tensor
-    feature_cols = {'x': tf.constant(t_x)}
-    # 第二个参数就是结果值，也要转成 Tensor
-    return feature_cols, tf.constant(t_y)
+#w 是要求的各个参数的权重，是目标输出，对应 t_w
+w = tf.Variable(np.zeros(param_count,dtype=np.float32).reshape((param_count,1)), tf.float32)
 
-def get_test_inputs():
-    e_x = np.floor(1000 * np.random.random([test_count, param_count]), dtype=np.float32)
-    t_w = np.floor([511, 231, 86, 434, 523], dtype=np.float32).reshape([param_count, 1])
-    print(t_w)
-    e_y = e_x.dot(t_w)
-    feature_cols = {'x': tf.constant(e_x)}
-    return feature_cols, tf.constant(e_y)
+feature_columns = [tf.contrib.layers.real_valued_column("")]
+regressor = tf.contrib.learn.DNNRegressor(feature_columns=feature_columns,
+                                                                                hidden_units=[5,5],
+                                                                                model_dir="/tmp/test2")
 
-def get_predict_inputs():
-    p_x = np.floor(1000 * np.random.random([test_count, param_count]), dtype=np.float32)
-    t_w = np.floor([511, 231, 86, 434, 523], dtype=np.float32).reshape([param_count, 1])
-    print(t_w)
-    feature_cols = {'x': tf.constant(p_x)}
-    p_y = p_x.dot(t_w)
-    print("预测输入:%s" % p_x)
-    print("实际结果:%s" % p_y)
-    return feature_cols
-
-LOSS_MIN_VALUE = 100
+LOSS_MIN_VALUE = 20000
 
 while True:
-        regressor.fit(input_fn=lambda: get_train_inputs(), steps=2000)
-        evaluate_result = regressor.evaluate(input_fn=lambda: get_test_inputs(),steps=1)
+        t_x = np.floor(1000 * np.random.random([test_count,param_count]),dtype=np.float32)
+        t_y = t_x.dot(t_w)
+        regressor.fit(x=t_x,y=t_y, steps=2000)
+        # 测试，测试结果.evaluate使一个字典，包括最终损失和迭代步数
+        e_x = np.floor(1000 * np.random.random([test_count,param_count]),dtype=np.float32)
+        e_y = e_x.dot(t_w)
+        evaluate_result = regressor.evaluate(x=e_x,y=e_y)
         print(evaluate_result)
 
         if evaluate_result['loss'] < LOSS_MIN_VALUE:
                 break
 
-result = str(list(regressor.predict(input_fn=lambda: get_predict_inputs())))
-print("预测结果:%s" % result)
+p_x = np.floor(1000 * np.random.random([test_count,param_count]),dtype=np.float32)
+p_y = p_x.dot(t_w)
+print("预测输入:%s" % p_x)
+print("实际结果:%s" % p_y)
+print("预测值:" % str(list(regressor.predict(p_x))))
+
+predict = regressor.predict(input_fn=test_input_fn, as_iterable=False)
+print(predict[:10])

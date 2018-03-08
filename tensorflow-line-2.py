@@ -57,6 +57,7 @@ sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 for i in range(3000):
         sess.run(train, {x:t_x, y:t_y})
-print(sess.run([w, loss],{x:t_x,y:t_y}))
+        if i % 100 == 0 :
+                print(sess.run([w, loss],{x:t_x,y:t_y}))
 
 exit(0)
