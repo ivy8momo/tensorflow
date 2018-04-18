@@ -43,6 +43,3 @@ p_y = p_x.dot(t_w)
 print("预测输入:%s" % p_x)
 print("实际结果:%s" % p_y)
 print("预测值:" % str(list(regressor.predict(p_x))))
-
-predict = regressor.predict(input_fn=test_input_fn, as_iterable=False)
-print(predict[:10])
